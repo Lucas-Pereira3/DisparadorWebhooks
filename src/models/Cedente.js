@@ -1,5 +1,5 @@
 const { DataTypes} = require('sequelize');
-const sequelize = require('../config/database');
+const sequelize = require('../config');
 const SoftwareHouse = require('./SoftwareHouse');
 
 const Cedente = sequelize.define('Cedente', {

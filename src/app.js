@@ -17,7 +17,7 @@ const { cacheRequest, cacheIndividual } = require('./middlewares/cache');
 
 // Controllers
 const { reenviar } = require('./controllers/reenviarController');
-const { listarProtocolos, buscarProtocolo } = require('./controllers/protocoloController');
+const { listarProtocolos, buscarProtocolo } = require('./controllers/webhookController');
 
 // Logger utilitário
 const logger = require('./utils/logger');

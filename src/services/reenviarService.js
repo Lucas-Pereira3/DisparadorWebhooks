@@ -1,32 +1,110 @@
-const WebhookReprocessado = require('../models/WebhookReprocessado');
 const { redisClient } = require('../config/redis');
-const ValidaçãoService = require('./ValidacaoService');
+const { WebhookReprocessado } = require('../models');
+const { validateSituacoes } = require('./validationService');
+const { getNotificationConfig, sendWebhook, generateProtocol } = require('./webhookService');
+const logger = require('../utils/logger');
 
-async function processReenviar(payload, cedente = {}){
-    const horaInicio = Date.now();
+const checkDuplicateRequest = async (reqBody, cedenteId) => {
+  const requestHash = JSON.stringify({ ...reqBody, cedenteId });
+  const cacheKey = `request_hash:${require('crypto').createHash('md5').update(requestHash).digest('hex')}`;
+  
+  const exists = await redisClient.get(cacheKey);
+  if (exists) {
+    return true;
+  }
+  
+  // Armazenar no cache por 1 hora
+  await redisClient.setEx(cacheKey, 3600, '1');
+  return false;
+};
 
-    // Parâmetros Obrigatórios: A requisição deve conter product, id (array de strings), kind e type.
-    try{
-        const { product, id, kind, type } = payload;
-        const ids = id;
-
-        if(!product || !Array.isArray(ids) || ids.length === 0 || !kind || !type ){
-            return { success: false, statusCode: 400, error: 'Parametros obrigatorios ausentes'};
-        }
-        // Limite de ID: 30 elementos
-        if(ids.length > 30){
-            return { success: false, statusCode: 400, error: 'Array de IDs nao pode exceder 30 elementos'}
-        }
-
-        //Cache de Requisicao
-        const chaveCache = criaChaveCache({ product, id: ids, kind, type }, cedente?.id);
-        try {
-            const exists = await redisClient.get(chaveCache);
-            if (exists){
-                return{ succes: false, statusCode: 429, error: 'Requisicao duplicada para os mesmos dados nas ultimas 1H',};
-            }
-        } catch(err){
-            logger.error('Falha ao consultar cache no Redis', err);
-        }
+const processReenviar = async (body, cedente) => {
+  const { product, id, kind, type } = body;
+  
+  try {
+    // Verificar duplicidade
+    const isDuplicate = await checkDuplicateRequest(body, cedente.id);
+    if (isDuplicate) {
+      throw new Error('Requisição duplicada detectada. Aguarde 1 hora para repetir a mesma operação.');
     }
-}
+
+    // Validar situações
+    const validationResult = await validateSituacoes(product, id, type, cedente.id);
+    if (!validationResult.isValid) {
+      return {
+        success: false,
+        error: validationResult.message,
+        invalidIds: validationResult.invalidIds,
+        statusCode: 422
+      };
+    }
+
+    // Buscar configuração de notificação
+    const config = await getNotificationConfig(cedente.id);
+    if (!config || !config.ativado) {
+      throw new Error('Configuração de notificação não encontrada ou desativada');
+    }
+
+    // Verificar se o tipo de notificação está ativado
+    if (!config[type]) {
+      throw new Error(`Notificação do tipo ${type} não está ativada`);
+    }
+
+    // Preparar dados para envio
+    const webhookData = {
+      product,
+      ids: id,
+      kind,
+      type,
+      timestamp: new Date().toISOString()
+    };
+
+    // Preparar headers
+    const headers = {};
+    if (config.header) {
+      headers[config.header_campo] = config.header_valor;
+    }
+
+    if (config.headers_adicionais && Array.isArray(config.headers_adicionais)) {
+      config.headers_adicionais.forEach(header => {
+        Object.assign(headers, header);
+      });
+    }
+
+    // Enviar webhook
+    const webhookResult = await sendWebhook(config.url, webhookData, headers);
+
+    if (!webhookResult.success) {
+      throw new Error(`Falha no envio do webhook: ${webhookResult.error}`);
+    }
+
+    // Gerar protocolo
+    const protocolo = generateProtocol();
+
+    // Salvar no banco de dados
+    await WebhookReprocessado.create({
+      data: body,
+      cedente_id: cedente.id,
+      kind,
+      type,
+      servico_id: JSON.stringify(id),
+      protocolo
+    });
+
+    return {
+      success: true,
+      protocolo,
+      webhookResult
+    };
+
+  } catch (error) {
+    logger.error('Erro no processamento de reenvio:', error);
+    return {
+      success: false,
+      error: error.message,
+      statusCode: error.statusCode || 400
+    };
+  }
+};
+
+module.exports = { processReenviar };

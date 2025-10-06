@@ -1,9 +1,7 @@
+
 require('dotenv').config();
-const { Sequelize } = require('sequelize');
 
-const env = process.env.NODE_ENV || 'development';
-
-const config = {
+module.exports = {
   development: {
     username: process.env.POSTGRES_USERNAME,
     password: process.env.POSTGRES_PASSWORD,
@@ -26,16 +24,3 @@ const config = {
     dialect: 'postgres',
   },
 };
-
-// Criando a instância do Sequelize
-const sequelize = new Sequelize(
-  config[env].database,
-  config[env].username,
-  config[env].password,
-  {
-    host: config[env].host,
-    dialect: config[env].dialect,
-  }
-);
-
-module.exports = sequelize;

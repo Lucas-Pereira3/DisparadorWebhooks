@@ -1,4 +1,4 @@
-const sequelize = require('../config/database');
+const sequelize = require('../config');
 const SoftwareHouse = require('./SoftwareHouse');
 const Cedente = require('./Cedente');
 const Conta = require('./Conta');
