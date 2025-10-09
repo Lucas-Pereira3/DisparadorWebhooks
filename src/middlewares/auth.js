@@ -1,4 +1,6 @@
+const jwt = require('jsonwebtoken');
 const { SoftwareHouse, Cedente } = require('../models');
+const logger = require('../utils/logger')
 
 const validateHeaders = async (req, res, next) => {
   try {

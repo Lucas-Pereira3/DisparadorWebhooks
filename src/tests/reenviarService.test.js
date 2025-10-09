@@ -1,12 +1,12 @@
 const { processReenviar } = require('../services/reenviarService');
-const { redisClient } = require('../config/redis');
+const { redisClient } = require('../config/redisClient');
 const { WebhookReprocessado } = require('../models');
 const { validateSituacoes } = require('../services/validationService');
 const { getNotificationConfig, sendWebhook, generateProtocol } = require('../services/webhookService');
 const logger = require('../utils/logger');
 
 // Mocks
-jest.mock('../config/redis', () => ({
+jest.mock('../config/redisClient', () => ({
   redisClient: {
     get: jest.fn(),
     setEx: jest.fn(),

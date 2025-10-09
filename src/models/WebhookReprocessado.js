@@ -20,7 +20,7 @@ const WebhookReprocessado = sequelize.define('WebhookReprocessado', {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {  
-            model: 'cedentes',
+            model: 'cedente',
             key: 'id'
         }
     },
@@ -41,7 +41,7 @@ const WebhookReprocessado = sequelize.define('WebhookReprocessado', {
         allowNull: false
     }
 }, {
-    tableName: 'webhooks_reprocessados',
+    tableName: 'webhooks_reprocessado',
     timestamps: false
 });
 

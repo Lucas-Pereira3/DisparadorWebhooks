@@ -38,7 +38,7 @@ const Conta = sequelize.define('Conta', {
         allowNull: true
     }
 }, {
-    tableName: 'contas',
+    tableName: 'conta',
     timestamps: false
 });
 

@@ -25,7 +25,7 @@ const Convenio = sequelize.define('Convenio', {
         }
     }
 }, {
-    tableName: 'convenios',
+    tableName: 'convenio',
     timestamps: false
 });
 

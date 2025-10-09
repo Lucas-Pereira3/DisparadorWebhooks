@@ -1,4 +1,4 @@
-const { redisClient } = require('../config/redis');
+const { redisClient } = require('../config/redisClient');
 const { WebhookReprocessado } = require('../models');
 const { validateSituacoes } = require('./validationService');
 const { getNotificationConfig, sendWebhook, generateProtocol } = require('./webhookService');

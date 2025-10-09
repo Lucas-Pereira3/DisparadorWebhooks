@@ -27,7 +27,7 @@ const SoftwareHouse = sequelize.define('SoftwareHouse', {
         defaultValue: 'ativo'
     }
 }, {
-    tableName: 'software_houses',
+    tableName: 'softwarehouse',
     timestamps: false
 });
 

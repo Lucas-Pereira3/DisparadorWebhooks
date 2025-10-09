@@ -1,56 +1,37 @@
-
-// app.js - API Base padronizada e segura
-
 require('dotenv').config();
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
+const logger = require('./utils/logger');
 
 const app = express();
 
-// Middlewares personalizados (funções nomeadas)
-const { validateHeaders } = require('./middlewares/auth');
-const { validateReenviar, validateProtocolos } = require('./middlewares/validation');
-const { cacheRequest, cacheIndividual } = require('./middlewares/cache');
-
-// Controllers
-const { reenviar } = require('./controllers/reenviarController');
-const { listarProtocolos, buscarProtocolo } = require('./controllers/webhookController');
-
-// Logger utilitário
-const logger = require('./utils/logger');
-
-// Segurança e configurações globais
-
-// Helmet - headers de segurança HTTP
+// Segurança HTTP
 app.use(helmet());
 
-// CORS - controle de origens
+// CORS configurável
 app.use(
   cors({
     origin:
       process.env.NODE_ENV === 'production'
         ? process.env.ALLOWED_ORIGINS
-        : '*', // em desenvolvimento libera tudo
+        : '*',
   })
 );
 
-// Rate limiting - evita abuso de requisições
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // limite de 100 requisições por IP
-  message: {
-    error: 'Muitas requisições deste IP, tente novamente mais tarde.',
-  },
-});
-app.use(limiter);
+// Limite de requisições por IP
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { error: 'Muitas requisições deste IP, tente novamente mais tarde.' },
+}));
 
-// Parser de JSON com limite de tamanho
+// Parser JSON com limite de 10MB
 app.use(express.json({ limit: '10mb' }));
 
-// Logging detalhado das requisições
+// Logging customizado com Winston
 app.use((req, res, next) => {
   logger.info(`${req.method} ${req.path}`, {
     body: req.body,
@@ -65,41 +46,25 @@ if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));
 }
 
-// Rotas principais da API
+// === ROTAS ===
+const reenviarRoutes = require('./routes/reenviarRoutes');
+const protocoloRoutes = require('./routes/protocoloRoutes');
+const healthRoutes = require('./routes/healthRoutes');
 
-// POST /reenviar → reenvio de mensagens
-app.post('/reenviar', validateHeaders, validateReenviar, reenviar);
+app.use('/reenviar', reenviarRoutes);
+app.use('/protocolos', protocoloRoutes);
+app.use('/health', healthRoutes);
 
-// GET /protocolos → lista protocolos (com cache)
-app.get('/protocolos', validateHeaders, validateProtocolos, cacheRequest(86400), listarProtocolos);
-
-// GET /protocolos/:uuid → busca protocolo individual (com cache)
-app.get('/protocolos/:uuid', validateHeaders, cacheIndividual(3600), buscarProtocolo);
-
-// GET /health → health check e monitoramento
-
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'OK',
-    timestamp: new Date().toISOString()
-  });
-});
-
-
-// Middleware de tratamento de erros globais
+// === HANDLERS GLOBAIS ===
+// Erros não tratados
 app.use((error, req, res, next) => {
   logger.error('Erro não tratado:', error);
-  res.status(500).json({
-    error: 'Erro interno do servidor',
-  });
+  res.status(500).json({ error: 'Erro interno do servidor' });
 });
 
-// Middleware para rotas não encontradas (404)
+// Rotas não encontradas
 app.use('*', (req, res) => {
-  res.status(404).json({
-    error: 'Rota não encontrada',
-  });
+  res.status(404).json({ error: 'Rota não encontrada' });
 });
 
-// Exporta a aplicação
 module.exports = app;

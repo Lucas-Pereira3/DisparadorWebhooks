@@ -26,7 +26,7 @@ const Servico = sequelize.define('Servico', {
         defaultValue: 'ativo'
     }
 }, {
-    tableName: 'servicos',
+    tableName: 'servico',
     timestamps: false
 });
 

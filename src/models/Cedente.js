@@ -22,11 +22,11 @@ const Cedente = sequelize.define('Cedente', {
         type: DataTypes.STRING,
         allowNull: false,
     },
-    softwareHouse_id: {
+    softwarehouse_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: SoftwareHouse,
+            model: 'softwarehouse',
             key: 'id'
         }
     },
@@ -40,7 +40,7 @@ const Cedente = sequelize.define('Cedente', {
         allowNull: true
     }
 }, {
-    tableName: 'cedentes',
+    tableName: 'cedente',
     timestamps: false
 });
 
