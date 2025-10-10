@@ -16,7 +16,7 @@ const Servico = sequelize.define('Servico', {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: 'convenios',
+            model: 'convenio',
             key: 'id'
         }
     },
@@ -27,7 +27,8 @@ const Servico = sequelize.define('Servico', {
     }
 }, {
     tableName: 'servico',
-    timestamps: false
+    timestamps: false,
+    freezeTableName: true
 });
 
 module.exports = Servico;

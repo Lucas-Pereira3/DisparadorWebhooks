@@ -28,7 +28,8 @@ const SoftwareHouse = sequelize.define('SoftwareHouse', {
     }
 }, {
     tableName: 'softwarehouse',
-    timestamps: false
+    timestamps: false,
+    freezeTableName: true
 });
 
 module.exports = SoftwareHouse;

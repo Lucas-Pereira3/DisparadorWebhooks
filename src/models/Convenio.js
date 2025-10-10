@@ -26,7 +26,8 @@ const Convenio = sequelize.define('Convenio', {
     }
 }, {
     tableName: 'convenio',
-    timestamps: false
+    timestamps: false,
+    freezeTableName: true
 });
 
 module.exports = Convenio;

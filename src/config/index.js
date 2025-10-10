@@ -9,6 +9,17 @@ const sequelize = new Sequelize(
   {
     host: config[env].host,
     dialect: config[env].dialect,
+    logging: config[env].logging,
+    define: {
+      freezeTableName: true, 
+      timestamps: false 
+    },
+    pool: {
+      max: 10,
+      min: 0,
+      acquire: 30000,
+      idle: 10000
+    }
   }
 );
 

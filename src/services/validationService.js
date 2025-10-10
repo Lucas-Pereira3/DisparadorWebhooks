@@ -44,8 +44,8 @@ const validateSituacoes = async (product, ids, type, cedenteId) => {
     });
 
     // Verificar se todos os IDs foram encontrados
-    const idsEncontrados = servicos.map(s => s.id);
-    const idsNaoEncontrados = ids.filter(id => !idsEncontrados.includes(id));
+    const idsEncontrados = servicos.map(s => String(s.id));
+    const idsNaoEncontrados = ids.filter(id => !idsEncontrados.includes(String(id)));
 
     if (idsNaoEncontrados.length > 0) {
       return {
@@ -55,10 +55,8 @@ const validateSituacoes = async (product, ids, type, cedenteId) => {
       };
     }
 
-    // Verificar situações (simulação aleatória)
-    const servicosComSituacaoIncorreta = servicos.filter(() => {
-      return Math.random() < 0.2; // 20% de chance de falhar (simulado)
-    });
+    // Desativa Verificar situações (simulação aleatória)
+    const servicosComSituacaoIncorreta = [];
 
     if (servicosComSituacaoIncorreta.length > 0) {
       const invalidIds = servicosComSituacaoIncorreta.map(s => s.id);

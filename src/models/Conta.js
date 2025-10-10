@@ -39,7 +39,8 @@ const Conta = sequelize.define('Conta', {
     }
 }, {
     tableName: 'conta',
-    timestamps: false
+    timestamps: false,
+    freezeTableName: true
 });
 
 module.exports = Conta;

@@ -41,8 +41,9 @@ const WebhookReprocessado = sequelize.define('WebhookReprocessado', {
         allowNull: false
     }
 }, {
-    tableName: 'webhooks_reprocessado',
-    timestamps: false
+    tableName: 'webhook_reprocessado',
+    timestamps: false,
+    freezeTableName: true
 });
 
 module.exports = WebhookReprocessado;

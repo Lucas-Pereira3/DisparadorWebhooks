@@ -41,7 +41,8 @@ const Cedente = sequelize.define('Cedente', {
     }
 }, {
     tableName: 'cedente',
-    timestamps: false
+    timestamps: false,
+    freezeTableName: true
 });
 
 module.exports = Cedente;

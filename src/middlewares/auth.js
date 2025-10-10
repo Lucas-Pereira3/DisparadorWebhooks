@@ -1,15 +1,10 @@
 const jwt = require('jsonwebtoken');
 const { SoftwareHouse, Cedente } = require('../models');
-const logger = require('../utils/logger')
+const logger = require('../utils/logger');
 
 const validateHeaders = async (req, res, next) => {
   try {
-    const {
-      'cnpj-sh': cnpjSh,
-      'token-sh': tokenSh,
-      'cnpj-cedente': cnpjCedente,
-      'token-cedente': tokenCedente
-    } = req.headers;
+    const { 'cnpj-sh': cnpjSh, 'token-sh': tokenSh, 'cnpj-cedente': cnpjCedente, 'token-cedente': tokenCedente } = req.headers;
 
     if (!cnpjSh || !tokenSh || !cnpjCedente || !tokenCedente) {
       return res.status(400).json({
@@ -17,6 +12,7 @@ const validateHeaders = async (req, res, next) => {
       });
     }
 
+    // Validar Software House
     const softwareHouse = await SoftwareHouse.findOne({
       where: { cnpj: cnpjSh, token: tokenSh, status: 'ativo' }
     });
@@ -27,12 +23,13 @@ const validateHeaders = async (req, res, next) => {
       });
     }
 
+    // Validar Cedente
     const cedente = await Cedente.findOne({
-      where: {
-        cnpj: cnpjCedente,
-        token: tokenCedente,
+      where: { 
+        cnpj: cnpjCedente, 
+        token: tokenCedente, 
         softwarehouse_id: softwareHouse.id,
-        status: 'ativo'
+        status: 'ativo' 
       }
     });
 
@@ -42,12 +39,13 @@ const validateHeaders = async (req, res, next) => {
       });
     }
 
+    // Adicionar informações ao request para uso posterior
     req.softwareHouse = softwareHouse;
     req.cedente = cedente;
 
     next();
   } catch (error) {
-    console.error('Erro na validação de autenticação:', error); // substituído logger.error
+    logger.error('Erro na validação de autenticação:', error);
     return res.status(500).json({
       error: 'Erro interno na validação de autenticação'
     });
