@@ -163,6 +163,83 @@ module.exports = {
       }
     });
 
+    // TABELAS DOS PRODUTOS (ESSENCIAIS PARA VALIDAÇÃO)
+
+    // Tabela boleto
+    await queryInterface.createTable('boleto', {
+      id: {
+        type: Sequelize.STRING,
+        primaryKey: true
+      },
+      situacao: {
+        type: Sequelize.STRING,
+        allowNull: false
+      },
+      cedente_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'cedente',
+          key: 'id'
+        }
+      },
+      data_criacao: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW
+      }
+    });
+
+    // Tabela pagamento
+    await queryInterface.createTable('pagamento', {
+      id: {
+        type: Sequelize.STRING,
+        primaryKey: true
+      },
+      situacao: {
+        type: Sequelize.STRING,
+        allowNull: false
+      },
+      cedente_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'cedente',
+          key: 'id'
+        }
+      },
+      data_criacao: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW
+      }
+    });
+
+    // Tabela pix
+    await queryInterface.createTable('pix', {
+      id: {
+        type: Sequelize.STRING,
+        primaryKey: true
+      },
+      situacao: {
+        type: Sequelize.STRING,
+        allowNull: false
+      },
+      cedente_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'cedente',
+          key: 'id'
+        }
+      },
+      data_criacao: {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.NOW
+      }
+    });
+
     // Tabela webhook_reprocessado
     await queryInterface.createTable('webhook_reprocessado', {
       id: {
@@ -207,7 +284,11 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
+    // Ordem inversa por causa das foreign keys
     await queryInterface.dropTable('webhook_reprocessado');
+    await queryInterface.dropTable('pix');
+    await queryInterface.dropTable('pagamento');
+    await queryInterface.dropTable('boleto');
     await queryInterface.dropTable('servico');
     await queryInterface.dropTable('convenio');
     await queryInterface.dropTable('conta');
@@ -215,4 +296,3 @@ module.exports = {
     await queryInterface.dropTable('softwarehouse');
   }
 };
-

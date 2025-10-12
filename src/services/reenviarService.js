@@ -70,10 +70,7 @@ const processReenviar = async (body, cedente) => {
         Object.assign(headers, header);
       });
     }
-    // 🔍 URL temporária para teste
-    const testUrl = 'https://disparadorwebhook.free.beeceptor.com'; // <-- cole aqui a URL gerada no webhook.site
-    logger.info(`Enviando webhook de teste para: ${testUrl}`);
-
+  
     // Enviar webhook
     const webhookResult = await sendWebhook(config.url, webhookData, headers);
 

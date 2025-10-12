@@ -5,6 +5,9 @@ const Conta = require('./Conta');
 const Convenio = require('./Convenio');
 const Servico = require('./Servico');
 const WebhookReprocessado = require('./WebhookReprocessado');
+const Boleto = require('./Boleto'); 
+const Pagamento = require('./Pagamento');
+const Pix = require('./Pix');
 
 // Definir associações
 Cedente.belongsTo(SoftwareHouse, { foreignKey: 'softwarehouse_id' });
@@ -22,6 +25,15 @@ Convenio.hasMany(Servico, { foreignKey: 'convenio_id' });
 WebhookReprocessado.belongsTo(Cedente, { foreignKey: 'cedente_id' });
 Cedente.hasMany(WebhookReprocessado, { foreignKey: 'cedente_id' });
 
+Boleto.belongsTo(Cedente, { foreignKey: 'cedente_id' });
+Cedente.hasMany(Boleto, { foreignKey: 'cedente_id' });
+
+Pagamento.belongsTo(Cedente, { foreignKey: 'cedente_id' });
+Cedente.hasMany(Pagamento, { foreignKey: 'cedente_id' });
+
+Pix.belongsTo(Cedente, { foreignKey: 'cedente_id' });
+Cedente.hasMany(Pix, { foreignKey: 'cedente_id' });
+
 module.exports = {
   sequelize,
   SoftwareHouse,
@@ -29,5 +41,8 @@ module.exports = {
   Conta,
   Convenio,
   Servico,
-  WebhookReprocessado
+  WebhookReprocessado,
+  Boleto,
+  Pagamento,
+  Pix 
 };
