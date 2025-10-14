@@ -1,11 +1,11 @@
 const { validateSituacoes } = require('../services/validationService');
-const { Servico } = require('../models');
+const { Boleto } = require('../models');
 
 // Mock dos modelos Sequelize
 jest.mock('../models', () => ({
-  Servico: { findAll: jest.fn() },
-  Conta: jest.fn(),
-  Cedente: jest.fn(),
+  Boleto: { findAll: jest.fn() },
+  Pagamento: { findAll: jest.fn() },
+  Pix: { findAll: jest.fn() },
 }));
 
 describe('validationService - validateSituacoes', () => {
@@ -19,16 +19,8 @@ describe('validationService - validateSituacoes', () => {
   });
 
   it('deve retornar isValid: true quando todos os serviços são válidos', async () => {
-    // Mockando os dados retornados
-    const mockServicos = ids.map(id => ({
-      id,
-      // nenhum com situação incorreta (simulação: Math.random >= 0.2)
-    }));
-
-    Servico.findAll.mockResolvedValue(mockServicos);
-
-    // Forçar Math.random para sempre retornar > 0.2 (simulação de situação correta)
-    jest.spyOn(Math, 'random').mockReturnValue(0.5);
+    const mockBoletos = ids.map(id => ({ id, situacao: 'LIQUIDADO' }));
+    Boleto.findAll.mockResolvedValue(mockBoletos);
 
     const result = await validateSituacoes(product, ids, type, cedenteId);
 
@@ -44,8 +36,8 @@ describe('validationService - validateSituacoes', () => {
   });
 
   it('deve retornar erro se algum ID não for encontrado', async () => {
-    const partialServicos = [{ id: '1' }, { id: '2' }]; // faltando o ID 3
-    Servico.findAll.mockResolvedValue(partialServicos);
+    const partialBoletos = [{ id: '1' }, { id: '2', situacao: 'LIQUIDADO' }]; // faltando o ID 3
+    Boleto.findAll.mockResolvedValue(partialBoletos);
 
     const result = await validateSituacoes(product, ids, type, cedenteId);
 
@@ -55,24 +47,22 @@ describe('validationService - validateSituacoes', () => {
   });
 
   it('deve retornar erro se algum serviço tiver situação incorreta', async () => {
-    const mockServicos = ids.map(id => ({ id }));
-
-    Servico.findAll.mockResolvedValue(mockServicos);
-
-    // Forçar Math.random para simular situação incorreta nos dois primeiros
-    const randomValues = [0.1, 0.1, 0.5];
-    let index = 0;
-    jest.spyOn(Math, 'random').mockImplementation(() => randomValues[index++]);
+    const mockBoletos = [
+      { id: '1', situacao: 'REGISTRADO' },
+      { id: '2', situacao: 'BAIXADO' },
+      { id: '3', situacao: 'LIQUIDADO' },
+    ];
+    Boleto.findAll.mockResolvedValue(mockBoletos);
 
     const result = await validateSituacoes(product, ids, type, cedenteId);
 
     expect(result.isValid).toBe(false);
     expect(result.invalidIds).toEqual(['1', '2']);
-    expect(result.message).toMatch(/A situação do boleto diverge do tipo de notificação/);
+    expect(result.message).toMatch(/situação do boleto diverge/);
   });
 
   it('deve lançar erro se ocorrer problema inesperado', async () => {
-    Servico.findAll.mockRejectedValue(new Error('DB error'));
+    Boleto.findAll.mockRejectedValue(new Error('DB error'));
 
     await expect(validateSituacoes(product, ids, type, cedenteId))
       .rejects

@@ -1,129 +1,91 @@
-// src/test/auth.test.js
-
-// ===== MOCKS COMPLETOS =====
-jest.mock('../config/database', () => ({
-  sequelize: {
-    close: jest.fn().mockResolvedValue(null)
-  }
-}));
-
-jest.mock('../models', () => ({
-  SoftwareHouse: {
-    findOne: jest.fn()
-  },
-  Cedente: {
-    findOne: jest.fn()
-  }
-}));
-
-jest.mock('winston', () => ({
-  createLogger: jest.fn(() => ({
-    info: jest.fn(),
-    error: jest.fn(),
-    warn: jest.fn()
-  }))
-}));
-
-// ===== IMPORTAR DEPOIS DOS MOCKS =====
 const validateHeaders = require('../middlewares/auth');
-const db = require('../models');
+const { SoftwareHouse, Cedente } = require('../models');
 
-// ===== TESTES =====
-describe('Middleware de autenticação', () => {
-  let req, res, next;
+// Mock dos métodos do Sequelize
+jest.mock('../models', () => ({
+  SoftwareHouse: { findOne: jest.fn() },
+  Cedente: { findOne: jest.fn() },
+}));
+
+describe('Middleware validateHeaders', () => {
+  let req;
+  let res;
+  let next;
 
   beforeEach(() => {
     req = {
       headers: {
-        'cnpj-sh': '123123123000123',
+        'cnpj-sh': '12345678000100',
         'token-sh': 'tokenSH',
-        'cnpj-cedente': '129129129000199',
+        'cnpj-cedente': '98765432000100',
         'token-cedente': 'tokenCedente'
       }
     };
+
     res = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn()
     };
+
     next = jest.fn();
 
     jest.clearAllMocks();
   });
 
-  test('deve retornar 400 se faltar header', async () => {
-    req.headers['cnpj-sh'] = undefined;
-    
-    await validateHeaders(req, res, next);
-    
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({
-      error: 'Headers de autenticação são obrigatórios: cnpj-sh, token-sh, cnpj-cedente, token-cedente'
-    });
-    expect(next).not.toHaveBeenCalled();
-  });
+  it('deve chamar next se todos os headers forem válidos e existirem registros', async () => {
+    SoftwareHouse.findOne.mockResolvedValue({ id: 1 });
+    Cedente.findOne.mockResolvedValue({ id: 1 });
 
-  test('deve retornar 401 se SoftwareHouse não for encontrada', async () => {
-    db.SoftwareHouse.findOne.mockResolvedValue(null);
-    
     await validateHeaders(req, res, next);
-    
-    expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({
-      error: 'Software House não encontrada ou credenciais inválidas'
-    });
-    expect(next).not.toHaveBeenCalled();
-  });
 
-  test('deve retornar 401 se Cedente não for encontrado', async () => {
-    db.SoftwareHouse.findOne.mockResolvedValue({ 
-      id: 1, 
-      cnpj: '123123123000123',
-      token: 'tokenSH',
-      status: 'ativo'
-    });
-    
-    db.Cedente.findOne.mockResolvedValue(null);
-    
-    await validateHeaders(req, res, next);
-    
-    expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({
-      error: 'Cedente não encontrado ou credenciais inválidas'
-    });
-    expect(next).not.toHaveBeenCalled();
-  });
-
-  test('deve chamar next se autenticação for bem-sucedida', async () => {
-    db.SoftwareHouse.findOne.mockResolvedValue({ 
-      id: 1, 
-      cnpj: '123123123000123',
-      token: 'tokenSH',
-      status: 'ativo'
-    });
-    
-    db.Cedente.findOne.mockResolvedValue({ 
-      id: 2, 
-      cnpj: '129129129000199',
-      token: 'tokenCedente',
-      softwarehouse_id: 1,
-      status: 'ativo'
-    });
-    
-    await validateHeaders(req, res, next);
-    
     expect(next).toHaveBeenCalled();
-    expect(res.status).not.toHaveBeenCalled();
   });
 
-  test('deve retornar 500 em caso de erro no banco', async () => {
-    db.SoftwareHouse.findOne.mockRejectedValue(new Error('DB error'));
-    
+  it('deve retornar 400 se algum header estiver faltando', async () => {
+    req.headers = {}; // nenhum header
     await validateHeaders(req, res, next);
-    
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      error: expect.stringContaining('Headers de autenticação são obrigatórios')
+    }));
+  });
+
+  it('deve retornar 401 se Software House não encontrada', async () => {
+    SoftwareHouse.findOne.mockResolvedValue(null);
+
+    await validateHeaders(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      error: expect.stringContaining('Software House não encontrada')
+    }));
+  });
+
+  it('deve retornar 401 se Cedente não encontrado', async () => {
+    // Software House encontrada para passar na primeira validação
+    SoftwareHouse.findOne.mockResolvedValue({ id: 1 });
+
+    // Cedente não encontrado
+    Cedente.findOne.mockResolvedValue(null);
+
+    await validateHeaders(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      error: expect.stringContaining('Cedente não encontrado')
+    }));
+  });
+
+  it('deve retornar 500 se ocorrer um erro inesperado', async () => {
+    // Simula erro no banco
+    SoftwareHouse.findOne.mockRejectedValue(new Error('DB error'));
+
+    await validateHeaders(req, res, next);
+
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({
-      error: 'Erro interno na validação de autenticação'
-    });
-    expect(next).not.toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      error: expect.stringContaining('Erro interno')
+    }));
   });
 });

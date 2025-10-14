@@ -25,17 +25,13 @@ const validateSituacoes = async (product, ids, type, cedenteId) => {
 
     // Validação de parâmetros
     if (!situacoesMap[type] || !situacoesMap[type][product]) {
-      return {
-        isValid: false,
-        message: `Tipo ${type} não é válido para o produto ${product}`
-      };
+      throw new Error(`Tipo ${type} não é válido para o produto ${product}`);
     }
 
     const situacoesPermitidas = situacoesMap[type][product];
     console.log('Situações permitidas:', situacoesPermitidas);
 
     // Buscar situações reais no banco
-    let entidades = [];
     const modelMap = {
       'boleto': Boleto,
       'pagamento': Pagamento,
@@ -44,13 +40,10 @@ const validateSituacoes = async (product, ids, type, cedenteId) => {
 
     const Model = modelMap[product];
     if (!Model) {
-      return {
-        isValid: false,
-        message: `Product ${product} não é válido`
-      };
+      throw new Error(`Product ${product} não é válido`);
     }
 
-    entidades = await Model.findAll({
+    const entidades = await Model.findAll({
       where: { 
         id: ids, 
         cedente_id: cedenteId 
@@ -89,7 +82,7 @@ const validateSituacoes = async (product, ids, type, cedenteId) => {
       return {
         isValid: false,
         invalidIds,
-        message: `Não foi possível gerar a notificação. A situação do ${product} diverge do tipo de notificação solicitado.`
+        message: `A situação do ${product} diverge do tipo de notificação.`
       };
     }
 
@@ -98,10 +91,7 @@ const validateSituacoes = async (product, ids, type, cedenteId) => {
 
   } catch (error) {
     console.error('Erro na validação:', error);
-    return {
-      isValid: false,
-      message: `Erro na validação: ${error.message}`
-    };
+    throw new Error(`Erro na validação de situações: ${error.message}`);
   }
 };
 

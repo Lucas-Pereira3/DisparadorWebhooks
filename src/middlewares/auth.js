@@ -1,18 +1,23 @@
-const jwt = require('jsonwebtoken');
 const { SoftwareHouse, Cedente } = require('../models');
 const logger = require('../utils/logger');
 
 const validateHeaders = async (req, res, next) => {
   try {
-    const { 'cnpj-sh': cnpjSh, 'token-sh': tokenSh, 'cnpj-cedente': cnpjCedente, 'token-cedente': tokenCedente } = req.headers;
+    const {
+      'cnpj-sh': cnpjSh,
+      'token-sh': tokenSh,
+      'cnpj-cedente': cnpjCedente,
+      'token-cedente': tokenCedente
+    } = req.headers;
 
+    //Valida se todos os headers obrigatórios foram enviados
     if (!cnpjSh || !tokenSh || !cnpjCedente || !tokenCedente) {
       return res.status(400).json({
         error: 'Headers de autenticação são obrigatórios: cnpj-sh, token-sh, cnpj-cedente, token-cedente'
       });
     }
 
-    // Validar Software House
+    //Busca Software House
     const softwareHouse = await SoftwareHouse.findOne({
       where: { cnpj: cnpjSh, token: tokenSh, status: 'ativo' }
     });
@@ -23,13 +28,13 @@ const validateHeaders = async (req, res, next) => {
       });
     }
 
-    // Validar Cedente
+    //Busca Cedente vinculado à Software House
     const cedente = await Cedente.findOne({
-      where: { 
-        cnpj: cnpjCedente, 
-        token: tokenCedente, 
+      where: {
+        cnpj: cnpjCedente,
+        token: tokenCedente,
         softwarehouse_id: softwareHouse.id,
-        status: 'ativo' 
+        status: 'ativo'
       }
     });
 
@@ -39,7 +44,7 @@ const validateHeaders = async (req, res, next) => {
       });
     }
 
-    // Adicionar informações ao request para uso posterior
+    //Passa dados adiante para uso nos controladores
     req.softwareHouse = softwareHouse;
     req.cedente = cedente;
 
