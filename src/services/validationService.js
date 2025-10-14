@@ -82,7 +82,7 @@ const validateSituacoes = async (product, ids, type, cedenteId) => {
       return {
         isValid: false,
         invalidIds,
-        message: `A situação do ${product} diverge do tipo de notificação.`
+        message: `Não foi possível gerar a notificação. A situação do ${product} diverge do tipo de notificação solicitado.`
       };
     }
 
