@@ -17,6 +17,27 @@ const Pix = sequelize.define('Pix', {
       model: 'cedente',
       key: 'id'
     }
+  },
+  data_criacao: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW
+  },
+  valor: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+  chave_pix: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  nome_recebedor: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  transaction_id: {
+    type: DataTypes.STRING,
+    allowNull: true
   }
 }, {
   tableName: 'pix',

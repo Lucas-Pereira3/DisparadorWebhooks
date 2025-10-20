@@ -3,7 +3,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up (queryInterface, Sequelize) {
-    // Tabela softwarehouse
+    // Tabela softwarehouse 
     await queryInterface.createTable('softwarehouse', {
       id: {
         type: Sequelize.INTEGER,
@@ -31,7 +31,7 @@ module.exports = {
       }
     });
 
-    // Tabela cedente
+    // Tabela cedente 
     await queryInterface.createTable('cedente', {
       id: {
         type: Sequelize.INTEGER,
@@ -71,7 +71,7 @@ module.exports = {
       }
     });
 
-    // Tabela conta
+    // Tabela conta 
     await queryInterface.createTable('conta', {
       id: {
         type: Sequelize.INTEGER,
@@ -110,7 +110,7 @@ module.exports = {
       }
     });
 
-    // Tabela convenio
+    // Tabela convenio 
     await queryInterface.createTable('convenio', {
       id: {
         type: Sequelize.INTEGER,
@@ -136,7 +136,7 @@ module.exports = {
       }
     });
 
-    // Tabela servico
+    // Tabela servico 
     await queryInterface.createTable('servico', {
       id: {
         type: Sequelize.INTEGER,
@@ -163,9 +163,9 @@ module.exports = {
       }
     });
 
-    // TABELAS DOS PRODUTOS (ESSENCIAIS PARA VALIDAÇÃO)
+    // TABELAS DOS PRODUTOS 
 
-    // Tabela boleto
+    // Tabela boleto - ADICIONAR CAMPOS PARA WEBHOOK
     await queryInterface.createTable('boleto', {
       id: {
         type: Sequelize.STRING,
@@ -187,10 +187,30 @@ module.exports = {
         type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.NOW
+      },
+      valor: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: true
+      },
+      vencimento: {
+        type: Sequelize.DATE,
+        allowNull: true
+      },
+      beneficiario: {
+        type: Sequelize.STRING,
+        allowNull: true
+      },
+      pagador: {
+        type: Sequelize.STRING,
+        allowNull: true
+      },
+      nosso_numero: {
+        type: Sequelize.STRING,
+        allowNull: true
       }
     });
 
-    // Tabela pagamento
+    // Tabela pagamento - ADICIONAR CAMPOS PARA WEBHOOK
     await queryInterface.createTable('pagamento', {
       id: {
         type: Sequelize.STRING,
@@ -212,10 +232,26 @@ module.exports = {
         type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.NOW
+      },
+      valor: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: true
+      },
+      data_agendamento: {
+        type: Sequelize.DATE,
+        allowNull: true
+      },
+      favorecido: {
+        type: Sequelize.STRING,
+        allowNull: true
+      },
+      descricao: {
+        type: Sequelize.STRING,
+        allowNull: true
       }
     });
 
-    // Tabela pix
+    // Tabela pix - ADICIONAR CAMPOS PARA WEBHOOK
     await queryInterface.createTable('pix', {
       id: {
         type: Sequelize.STRING,
@@ -237,6 +273,22 @@ module.exports = {
         type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.NOW
+      },
+      valor: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: true
+      },
+      chave_pix: {
+        type: Sequelize.STRING,
+        allowNull: true
+      },
+      nome_recebedor: {
+        type: Sequelize.STRING,
+        allowNull: true
+      },
+      transaction_id: {
+        type: Sequelize.STRING,
+        allowNull: true
       }
     });
 

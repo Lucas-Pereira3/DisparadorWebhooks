@@ -31,7 +31,7 @@ const validateSituacoes = async (product, ids, type, cedenteId) => {
     const situacoesPermitidas = situacoesMap[type][product];
     console.log('Situações permitidas:', situacoesPermitidas);
 
-    // Buscar situações reais no banco
+    // Buscar situações reais no banco com os novos campos
     const modelMap = {
       'boleto': Boleto,
       'pagamento': Pagamento,
@@ -43,12 +43,13 @@ const validateSituacoes = async (product, ids, type, cedenteId) => {
       throw new Error(`Product ${product} não é válido`);
     }
 
+    // Buscar todos os campos para validação completa
     const entidades = await Model.findAll({
       where: { 
         id: ids, 
         cedente_id: cedenteId 
       },
-      attributes: ['id', 'situacao']
+      attributes: ['id', 'situacao', 'valor', 'data_criacao']
     });
 
     console.log('Entidades encontradas no banco:', entidades.length);

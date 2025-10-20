@@ -2,20 +2,123 @@ const { redisClient } = require('../config/redisClient');
 const { WebhookReprocessado } = require('../models');
 const { validateSituacoes } = require('./validationService');
 const { getNotificationConfig, sendWebhook, generateProtocol } = require('./webhookService');
+const { buildWebhookBody } = require('./webhookBodyBuilder');
 const logger = require('../utils/logger');
+const crypto = require('crypto');
 
 const checkDuplicateRequest = async (reqBody, cedenteId) => {
   const requestHash = JSON.stringify({ ...reqBody, cedenteId });
-  const cacheKey = `request_hash:${require('crypto').createHash('md5').update(requestHash).digest('hex')}`;
+  const cacheKey = `request_hash:${crypto.createHash('md5').update(requestHash).digest('hex')}`;
   
   const exists = await redisClient.get(cacheKey);
   if (exists) {
     return true;
   }
   
-  // Armazenar no cache por 1 hora
+  // Salva o hash da requisição com expiração de 1 hora
   await redisClient.setEx(cacheKey, 3600, '1');
   return false;
+};
+
+// Função para gerar token real
+const generateRealToken = () => {
+  return crypto.randomBytes(32).toString('hex'); // Token de 64 caracteres
+};
+
+// Função para gerar accountHash real - MOVER PARA DENTRO DO MÓDULO
+const generateRealAccountHash = () => {
+  return crypto.randomBytes(8).toString('hex').toUpperCase(); // Hash de 16 caracteres
+};
+
+// Função para determinar o formato do webhook baseado no produto
+const getWebhookFormat = (product) => {
+  const formats = {
+    'boleto': 'boleto',
+    'pagamento': 'pagamento', 
+    'pix': 'pix'
+  };
+  return formats[product] || 'pagamento';
+};
+
+// Função para construir headers específicos por produto
+const buildProductHeaders = (product, config, cedente) => {
+  switch (product) {
+    case 'pagamento':
+      // Formato da imagem do pagamento: array com login e token REAL
+      const login = cedente.id.toString() || "00000";
+      const token = cedente.token || config.header_valor || generateRealToken();
+      
+      return [
+        { "login": login },
+        { "token": token }
+      ];
+    
+    case 'boleto':
+      // Formato da imagem do boleto: string simples
+      return "defaultHeaders";
+    
+    case 'pix':
+      // Formato da imagem do pix: string descritiva
+      return "Headers configurado pelo cliente";
+    
+    default:
+      return "Headers configurado pelo cliente";
+  }
+};
+
+// Função para construir a estrutura do webhook baseado no produto
+const buildWebhookData = (product, kind, url, headers, body) => {
+  const format = getWebhookFormat(product);
+  
+  switch (format) {
+    case 'pagamento':
+      // Estrutura da imagem do pagamento
+      return {
+        notifications: [{
+          url: url,
+          body: body, 
+          kind: kind,
+          method: 'POST',
+          headers: headers
+        }]
+      };
+    
+    case 'boleto':
+      // Estrutura da imagem do boleto
+      return {
+        notifications: [{
+          body: body, 
+          kind: kind,
+          method: 'POST',
+          url: url,
+          headers: headers
+        }]
+      };
+    
+    case 'pix':
+      // Estrutura da imagem do pix
+      return {
+        notifications: [{
+          kind: kind,
+          method: 'POST',
+          url: url,
+          headers: headers,
+          body: body
+        }]
+      };
+    
+    default:
+      // Estrutura padrão
+      return {
+        notifications: [{
+          kind: kind,
+          method: 'POST',
+          url: url,
+          headers: headers,
+          body: body
+        }]
+      };
+  }
 };
 
 const processReenviar = async (body, cedente) => {
@@ -39,7 +142,7 @@ const processReenviar = async (body, cedente) => {
       };
     }
 
-    // Buscar configuração de notificação
+    // Buscar configuração de notificação 
     const config = await getNotificationConfig(cedente.id);
     if (!config || !config.ativado) {
       throw new Error('Configuração de notificação não encontrada ou desativada');
@@ -50,40 +153,49 @@ const processReenviar = async (body, cedente) => {
       throw new Error(`Notificação do tipo ${type} não está ativada`);
     }
 
-    // Preparar dados para envio
-    const webhookData = {
-      product,
-      ids: id,
-      kind,
-      type,
-      timestamp: new Date().toISOString()
-    };
+    // Gerar accountHash aqui e passar para a função
+    const accountHash = generateRealAccountHash();
 
-    // Preparar headers
-    const headers = {};
+    // Construir corpo do webhook específico para o produto
+    const webhookBody = await buildWebhookBody(product, type, id, cedente, accountHash);
+
+    // Construir headers específicos para cada produto com dados REAIS
+    const productHeaders = buildProductHeaders(product, config, cedente);
+
+    // Construir estrutura do webhook baseada no produto
+    const webhookData = buildWebhookData(product, kind, config.url, productHeaders, webhookBody);
+
+    // Preparar headers para a requisição HTTP (para o axios)
+    const requestHeaders = {};
     if (config.header) {
-      headers[config.header_campo] = config.header_valor;
+      requestHeaders[config.header_campo] = config.header_valor;
     }
 
+    // Adicionar headers adicionais da configuração
     if (config.headers_adicionais && Array.isArray(config.headers_adicionais)) {
       config.headers_adicionais.forEach(header => {
-        Object.assign(headers, header);
+        Object.assign(requestHeaders, header);
       });
     }
-  
+
+    // Incluir headers padrão
+    Object.assign(requestHeaders, {
+      'Content-Type': 'application/json'
+    });
+
     // Enviar webhook
-    const webhookResult = await sendWebhook(config.url, webhookData, headers);
+    const webhookResult = await sendWebhook(config.url, webhookData, requestHeaders);
 
     if (!webhookResult.success) {
       throw new Error(`Falha no envio do webhook: ${webhookResult.error}`);
     }
 
-    // Gerar protocolo
+    // Gerar protocolo 
     const protocolo = generateProtocol();
 
     // Salvar no banco de dados
     await WebhookReprocessado.create({
-      data: body,
+      data: webhookData,
       cedente_id: cedente.id,
       kind,
       type,
@@ -107,4 +219,7 @@ const processReenviar = async (body, cedente) => {
   }
 };
 
-module.exports = { processReenviar };
+// Exportar a função
+module.exports = { 
+  processReenviar
+};
