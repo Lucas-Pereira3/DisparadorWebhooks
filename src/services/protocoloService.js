@@ -95,7 +95,7 @@ const getProtocolo = async (uuid, cedenteId) => {
         kind: protocolo.kind,
         type: protocolo.type,
         data_criacao: protocolo.data_criacao,
-        servico_id: pr.servico_id,
+        servico_id: protocolo.servico_id,
         data: protocolo.data,
         status: status
       }
