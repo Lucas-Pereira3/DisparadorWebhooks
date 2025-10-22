@@ -7,8 +7,8 @@ const logger = require('../utils/logger');
 const crypto = require('crypto');
 
 const checkDuplicateRequest = async (reqBody, cedenteId) => {
-  const requestHash = JSON.stringify({ ...reqBody, cedenteId });
-  const cacheKey = `request_hash:${crypto.createHash('md5').update(requestHash).digest('hex')}`;
+  const requestHash = crypto.createHash('md5').update(JSON.stringify({ ...reqBody, cedenteId })).digest('hex');
+  const cacheKey = `request_hash:${requestHash}`;
   
   const exists = await redisClient.get(cacheKey);
   if (exists) {
@@ -22,12 +22,12 @@ const checkDuplicateRequest = async (reqBody, cedenteId) => {
 
 // Função para gerar token real
 const generateRealToken = () => {
-  return crypto.randomBytes(32).toString('hex'); // Token de 64 caracteres
+  return crypto.randomBytes(32).toString('hex');
 };
 
-// Função para gerar accountHash real - MOVER PARA DENTRO DO MÓDULO
+// Função para gerar accountHash real
 const generateRealAccountHash = () => {
-  return crypto.randomBytes(8).toString('hex').toUpperCase(); // Hash de 16 caracteres
+  return crypto.randomBytes(8).toString('hex').toUpperCase();
 };
 
 // Função para determinar o formato do webhook baseado no produto
@@ -44,7 +44,6 @@ const getWebhookFormat = (product) => {
 const buildProductHeaders = (product, config, cedente) => {
   switch (product) {
     case 'pagamento':
-      // Formato da imagem do pagamento: array com login e token REAL
       const login = cedente.id.toString() || "00000";
       const token = cedente.token || config.header_valor || generateRealToken();
       
@@ -54,11 +53,9 @@ const buildProductHeaders = (product, config, cedente) => {
       ];
     
     case 'boleto':
-      // Formato da imagem do boleto: string simples
       return "defaultHeaders";
     
     case 'pix':
-      // Formato da imagem do pix: string descritiva
       return "Headers configurado pelo cliente";
     
     default:
@@ -72,7 +69,6 @@ const buildWebhookData = (product, kind, url, headers, body) => {
   
   switch (format) {
     case 'pagamento':
-      // Estrutura da imagem do pagamento
       return {
         notifications: [{
           url: url,
@@ -84,7 +80,6 @@ const buildWebhookData = (product, kind, url, headers, body) => {
       };
     
     case 'boleto':
-      // Estrutura da imagem do boleto
       return {
         notifications: [{
           body: body, 
@@ -96,7 +91,6 @@ const buildWebhookData = (product, kind, url, headers, body) => {
       };
     
     case 'pix':
-      // Estrutura da imagem do pix
       return {
         notifications: [{
           kind: kind,
@@ -108,7 +102,6 @@ const buildWebhookData = (product, kind, url, headers, body) => {
       };
     
     default:
-      // Estrutura padrão
       return {
         notifications: [{
           kind: kind,
@@ -131,7 +124,7 @@ const processReenviar = async (body, cedente) => {
       throw new Error('Requisição duplicada detectada. Aguarde 1 hora para repetir a mesma operação.');
     }
 
-    // Validar situações
+    // Validar situações e obter serviços
     const validationResult = await validateSituacoes(product, id, type, cedente.id);
     if (!validationResult.isValid) {
       return {
@@ -141,6 +134,8 @@ const processReenviar = async (body, cedente) => {
         statusCode: 422
       };
     }
+
+    const servicos = validationResult.servicos;
 
     // Buscar configuração de notificação 
     const config = await getNotificationConfig(cedente.id);
@@ -153,19 +148,19 @@ const processReenviar = async (body, cedente) => {
       throw new Error(`Notificação do tipo ${type} não está ativada`);
     }
 
-    // Gerar accountHash aqui e passar para a função
+    // Gerar accountHash
     const accountHash = generateRealAccountHash();
 
-    // Construir corpo do webhook específico para o produto
-    const webhookBody = await buildWebhookBody(product, type, id, cedente, accountHash);
+    // Construir corpo do webhook específico para o produto COM DADOS REAIS
+    const webhookBody = await buildWebhookBody(product, type, servicos, cedente, accountHash);
 
-    // Construir headers específicos para cada produto com dados REAIS
+    // Construir headers específicos para cada produto
     const productHeaders = buildProductHeaders(product, config, cedente);
 
     // Construir estrutura do webhook baseada no produto
     const webhookData = buildWebhookData(product, kind, config.url, productHeaders, webhookBody);
 
-    // Preparar headers para a requisição HTTP (para o axios)
+    // Preparar headers para a requisição HTTP
     const requestHeaders = {};
     if (config.header) {
       requestHeaders[config.header_campo] = config.header_valor;
@@ -203,6 +198,14 @@ const processReenviar = async (body, cedente) => {
       protocolo
     });
 
+    // Criar cache da requisição bem-sucedida
+    const cacheKey = `${product}:${id.join(',')}:${kind}:${type}`;
+    await redisClient.setEx(cacheKey, 3600, JSON.stringify({
+      success: true,
+      protocolo,
+      message: 'Notificação reprocessada com sucesso'
+    }));
+
     return {
       success: true,
       protocolo,
@@ -219,7 +222,6 @@ const processReenviar = async (body, cedente) => {
   }
 };
 
-// Exportar a função
 module.exports = { 
   processReenviar
 };

@@ -29,7 +29,6 @@ const listProtocolos = async (filters, cedenteId) => {
       whereClause[Op.or] = idConditions;
     }
 
-
     const protocolos = await WebhookReprocessado.findAll({
       where: whereClause,
       order: [['data_criacao', 'DESC']],

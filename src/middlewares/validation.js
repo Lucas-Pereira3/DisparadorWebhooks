@@ -4,7 +4,7 @@ const logger = require('../utils/logger');
 // Esquema de validação para reenvio
 const reenviarSchema = Joi.object({
   product: Joi.string().valid('boleto', 'pagamento', 'pix').required(),
-  id: Joi.array().items(Joi.string()).max(30).required(),
+  id: Joi.array().items(Joi.string().pattern(/^\d+$/).message('IDs devem ser números')).max(30).required(),
   kind: Joi.string().valid('webhook').required(),
   type: Joi.string().valid('disponivel', 'cancelado', 'pago').required()
 });
@@ -25,9 +25,14 @@ const validateReenviar = (req, res, next) => {
     if (error) {
         logger.warn('Validação falhou para reenviar:', error.details);
         return res.status(400).json({
-            error: 'Dados de entrada inválidos',
+            error: 'Parâmetros de entrada inválidos',
             details: error.details.map((detail) => detail.message),
         });
+    }
+
+    // Converter IDs para números
+    if (req.body.id && Array.isArray(req.body.id)) {
+        req.body.id = req.body.id.map(id => parseInt(id, 10));
     }
 
     next();
@@ -58,8 +63,8 @@ const validateProtocolos = (req, res, next) => {
 
     next();
 };
+
 module.exports = {
   validateReenviar,
   validateProtocolos,
 };
-        

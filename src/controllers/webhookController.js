@@ -31,7 +31,7 @@ exports.listarProtocolos = async (req, res, next) => {
             return res.json(JSON.parse(cachedData));
         }
 
-        // Usar o service em vez de consulta direta
+        // Usar o service
         const result = await listProtocolos(req.query, req.cedente.id);
 
         if (!result.success) {
@@ -84,7 +84,7 @@ exports.buscarProtocolo = async (req, res, next) => {
             }
         }
 
-        // Usar o service em vez de consulta direta
+        // Usar o service
         const result = await getProtocolo(uuid, req.cedente.id);
 
         if (!result.success) {

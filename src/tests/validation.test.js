@@ -23,14 +23,14 @@ describe('Validação de Reenvio', () => {
     const next = jest.fn();
 
     validateReenviar(req, res, next);
-    expect(next).toHaveBeenCalled(); // deve chamar next()
+    expect(next).toHaveBeenCalled(); 
   });
 
   it('deve falhar com dados inválidos', () => {
     const req = {
       body: {
-        product: 'invalido', // inválido
-        id: [], // vazio
+        product: 'invalido',
+        id: [], 
         kind: 'webhook'
       }
     };
@@ -44,7 +44,10 @@ describe('Validação de Reenvio', () => {
     validateReenviar(req, res, next);
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ error: 'Dados de entrada inválidos' })
+      expect.objectContaining({ 
+        error: 'Parâmetros de entrada inválidos', 
+        details: expect.any(Array)
+      })
     );
     expect(next).not.toHaveBeenCalled();
   });

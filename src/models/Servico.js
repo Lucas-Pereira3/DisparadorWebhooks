@@ -12,6 +12,14 @@ const Servico = sequelize.define('Servico', {
         allowNull: false,
         defaultValue: DataTypes.NOW
     },
+    produto: {
+        type: DataTypes.ENUM('BOLETO', 'PAGAMENTO', 'PIX'),
+        allowNull: false
+    },
+    situacao: {
+        type: DataTypes.ENUM('disponivel', 'cancelado', 'pago'),
+        allowNull: false
+    },
     convenio_id: {
         type: DataTypes.INTEGER,
         allowNull: false,

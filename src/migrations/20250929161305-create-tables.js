@@ -1,8 +1,8 @@
+// migrations/20250929161305-create-tables.js
 'use strict';
 
-/** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up (queryInterface, Sequelize) {
+  async up(queryInterface, Sequelize) {
     // Tabela softwarehouse 
     await queryInterface.createTable('softwarehouse', {
       id: {
@@ -119,7 +119,7 @@ module.exports = {
       },
       numero_convenio: {
         type: Sequelize.STRING,
-        allowNull: false
+        allowNull: false,
       },
       data_criacao: {
         type: Sequelize.DATE,
@@ -148,6 +148,14 @@ module.exports = {
         allowNull: false,
         defaultValue: Sequelize.NOW
       },
+      produto: {
+        type: Sequelize.ENUM('BOLETO', 'PAGAMENTO', 'PIX'),
+        allowNull: false
+      },
+      situacao: {
+        type: Sequelize.ENUM('disponivel', 'cancelado', 'pago'),
+        allowNull: false
+      },
       convenio_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
@@ -160,135 +168,6 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false,
         defaultValue: 'ativo'
-      }
-    });
-
-    // TABELAS DOS PRODUTOS 
-
-    // Tabela boleto - ADICIONAR CAMPOS PARA WEBHOOK
-    await queryInterface.createTable('boleto', {
-      id: {
-        type: Sequelize.STRING,
-        primaryKey: true
-      },
-      situacao: {
-        type: Sequelize.STRING,
-        allowNull: false
-      },
-      cedente_id: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: 'cedente',
-          key: 'id'
-        }
-      },
-      data_criacao: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.NOW
-      },
-      valor: {
-        type: Sequelize.DECIMAL(10, 2),
-        allowNull: true
-      },
-      vencimento: {
-        type: Sequelize.DATE,
-        allowNull: true
-      },
-      beneficiario: {
-        type: Sequelize.STRING,
-        allowNull: true
-      },
-      pagador: {
-        type: Sequelize.STRING,
-        allowNull: true
-      },
-      nosso_numero: {
-        type: Sequelize.STRING,
-        allowNull: true
-      }
-    });
-
-    // Tabela pagamento - ADICIONAR CAMPOS PARA WEBHOOK
-    await queryInterface.createTable('pagamento', {
-      id: {
-        type: Sequelize.STRING,
-        primaryKey: true
-      },
-      situacao: {
-        type: Sequelize.STRING,
-        allowNull: false
-      },
-      cedente_id: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: 'cedente',
-          key: 'id'
-        }
-      },
-      data_criacao: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.NOW
-      },
-      valor: {
-        type: Sequelize.DECIMAL(10, 2),
-        allowNull: true
-      },
-      data_agendamento: {
-        type: Sequelize.DATE,
-        allowNull: true
-      },
-      favorecido: {
-        type: Sequelize.STRING,
-        allowNull: true
-      },
-      descricao: {
-        type: Sequelize.STRING,
-        allowNull: true
-      }
-    });
-
-    // Tabela pix - ADICIONAR CAMPOS PARA WEBHOOK
-    await queryInterface.createTable('pix', {
-      id: {
-        type: Sequelize.STRING,
-        primaryKey: true
-      },
-      situacao: {
-        type: Sequelize.STRING,
-        allowNull: false
-      },
-      cedente_id: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: 'cedente',
-          key: 'id'
-        }
-      },
-      data_criacao: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.NOW
-      },
-      valor: {
-        type: Sequelize.DECIMAL(10, 2),
-        allowNull: true
-      },
-      chave_pix: {
-        type: Sequelize.STRING,
-        allowNull: true
-      },
-      nome_recebedor: {
-        type: Sequelize.STRING,
-        allowNull: true
-      },
-      transaction_id: {
-        type: Sequelize.STRING,
-        allowNull: true
       }
     });
 
@@ -336,11 +215,7 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    // Ordem inversa por causa das foreign keys
     await queryInterface.dropTable('webhook_reprocessado');
-    await queryInterface.dropTable('pix');
-    await queryInterface.dropTable('pagamento');
-    await queryInterface.dropTable('boleto');
     await queryInterface.dropTable('servico');
     await queryInterface.dropTable('convenio');
     await queryInterface.dropTable('conta');

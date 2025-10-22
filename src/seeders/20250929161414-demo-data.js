@@ -1,210 +1,324 @@
 'use strict';
 
-/** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    // Primeiro: softwarehouse com ID explícito
-    await queryInterface.bulkInsert('softwarehouse', [{
-      id: 1,
-      cnpj: '12345678000196',
-      token: 'sh_token_123',
-      status: 'ativo',
-      data_criacao: new Date()
-    }], {});
+    // SoftwareHouse
+    await queryInterface.bulkInsert('softwarehouse', [
+      {
+        id: 1,
+        cnpj: "61199921000110",
+        token: "AbC123defGHI456jklMNOpqrSTU789vwXYZ0abc4",
+        status: "ativo",
+        data_criacao: new Date(),
+      },
+      {
+        id: 2,
+        cnpj: "33517684000152",
+        token: "q1W2e3R4t5Y6u7I8o9P0a1S2d3F4g5H6j7K8l9M0",
+        status: "inativo",
+        data_criacao: new Date(),
+      },
+      {
+        id: 3,
+        cnpj: "74718190000113",
+        token: "Z9y8X7w6V5u4T3s2R1q0P9o8N7m6B5v4C3x2D1e0",
+        status: "inativo",
+        data_criacao: new Date(),
+      },
+    ], {});
 
-    // Segundo: cedente referenciando o ID correto
-    await queryInterface.bulkInsert('cedente', [{
-      id: 1,
-      cnpj: '98765432000198',
-      token: 'cedente_token_456',
-      softwarehouse_id: 1,
-      status: 'ativo',
-      configuracao_notificacao: JSON.stringify({  
-        ativado: true,
-        url: 'https://webhook.site/3532cf9a-ba2c-4c54-87f8-c45a7569d538',
-        header: true,
-        header_campo: 'Authorization',
-        header_valor: 'Bearer cedente_token_456',
-        headers_adicionais: [
-          { 'X-Custom-Header': 'custom-value' },
-          { 'X-API-Version': '1.0' }
-        ],
-        disponivel: true,
-        cancelado: true,
-        pago: true
-      }),
-      data_criacao: new Date()
-    }], {});
+    // Cedente
+    await queryInterface.bulkInsert('cedente', [
+      {
+        id: 1,
+        cnpj: "45723174000110",
+        token: "A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8S9t0",
+        softwarehouse_id: 1,
+        status: "ativo",
+        configuracao_notificacao: JSON.stringify({
+          url: "https://webhook.site/3532cf9a-ba2c-4c54-87f8-c45a7569d538",
+          email: null,
+          tipos: {},
+          cancelado: true,
+          pago: true,
+          disponivel: true, 
+          header: false,
+          ativado: true,
+          header_campo: "",
+          header_valor: "",
+          headers_adicionais: [
+            {"content-type": "application/json"}
+          ],
+        }),
+        data_criacao: new Date(),
+      },
+      {
+        id: 2,
+        cnpj: "33198567000125",
+        token: "Q1w2E3r4T5y6U7i8O9p0A1s2D3f4G5h6J7k8L9m0",
+        softwarehouse_id: 2,
+        status: "inativo",
+        configuracao_notificacao: null,
+        data_criacao: new Date(),
+      },
+      {
+        id: 3,
+        cnpj: "74910332000104",
+        token: "N1m2B3v4C5x6Z7a8S9d0F1g2H3j4K5l6P7o8I9u0",
+        softwarehouse_id: 3,
+        status: "inativo",
+        configuracao_notificacao: null,
+        data_criacao: new Date(),
+      },
+    ], {});
 
-    // Terceiro: conta referenciando cedente
-    await queryInterface.bulkInsert('conta', [{
-      id: 1,
-      produto: 'boleto',
-      banco_codigo: '001',
-      cedente_id: 1,
-      status: 'ativo',
-      configuracao_notificacao: JSON.stringify({
-        ativado: true,
-        url: 'https://webhook.site/3532cf9a-ba2c-4c54-87f8-c45a7569d538',
-        header: true,
-        header_campo: 'X-Conta-Token',
-        header_valor: 'conta_token_789',
-        headers_adicionais: [
-          { 'X-Conta-ID': '1' }
-        ],
-        disponivel: true,
-        cancelado: true,
-        pago: true
-      }),
-      data_criacao: new Date()
-    }], {});
+    // Conta 
+    await queryInterface.bulkInsert('conta', [
+      {
+        id: 1,
+        produto: "boleto",
+        banco_codigo: "341",
+        cedente_id: 1,
+        status: "ativo",
+        configuracao_notificacao: JSON.stringify({
+          url: "https://webhook.site/3532cf9a-ba2c-4c54-87f8-c45a7569d538",
+          email: null,
+          tipos: {},
+          cancelado: true,   
+          pago: true,        
+          disponivel: true,  
+          header: false,
+          ativado: true,
+          header_campo: "",
+          header_valor: "",
+          headers_adicionais: [
+            {"content-type": "application/json"}
+          ],
+        }),
+        data_criacao: new Date("2025-09-10"),
+      },
+      {
+        id: 2,
+        produto: "pix",
+        banco_codigo: "001",
+        cedente_id: 2,
+        status: "inativo",
+        configuracao_notificacao: JSON.stringify({
+          url: "https://webhook.site/3532cf9a-ba2c-4c54-87f8-c45a7569d538",
+          email: null,
+          tipos: {},
+          cancelado: true,   
+          pago: true,        
+          disponivel: true,  
+          header: false,
+          ativado: true,
+          header_campo: "",
+          header_valor: "",
+          headers_adicionais: [
+            {"content-type": "application/json"}
+          ],
+        }),
+        data_criacao: new Date("2025-09-09"),
+      },
+      {
+        id: 3,
+        produto: "pagamento",
+        banco_codigo: "001",
+        cedente_id: 3,
+        status: "inativo",
+        configuracao_notificacao: JSON.stringify({
+          url: "https://webhook.site/3532cf9a-ba2c-4c54-87f8-c45a7569d538",
+          email: null,
+          tipos: {},
+          cancelado: true,   
+          pago: true,        
+          disponivel: true, 
+          header: false,
+          ativado: true,
+          header_campo: "",
+          header_valor: "",
+          headers_adicionais: [
+            {"content-type": "application/json"}
+          ],
+        }),
+        data_criacao: new Date("2025-09-08"),
+      },
+      {
+        id: 4,
+        produto: "boleto",
+        banco_codigo: "237",
+        cedente_id: 1,
+        status: "ativo",
+        configuracao_notificacao: JSON.stringify({
+          url: "https://webhook.site/3532cf9a-ba2c-4c54-87f8-c45a7569d538",
+          email: null,
+          tipos: {},
+          cancelado: true,   
+          pago: true,        
+          disponivel: true,  
+          header: false,
+          ativado: true,
+          header_campo: "",
+          header_valor: "",
+          headers_adicionais: [
+            {"content-type": "application/json"}
+          ],
+        }),
+        data_criacao: new Date("2025-09-07"),
+      },
+    ], {});
 
-    // Quarto: convenio referenciando conta
-    await queryInterface.bulkInsert('convenio', [{
-      id: 1,
-      numero_convenio: '123456',
-      conta_id: 1,
-      data_criacao: new Date()
-    }], {});
+    // Convenio 
+    await queryInterface.bulkInsert('convenio', [
+      {
+        id: 1,
+        numero_convenio: "102938",
+        data_criacao: new Date(),
+        conta_id: 1,
+      },
+      {
+        id: 2,
+        numero_convenio: "564738",
+        data_criacao: new Date(),
+        conta_id: 2,
+      },
+      {
+        id: 3,
+        numero_convenio: "918273",
+        data_criacao: new Date(),
+        conta_id: 3,
+      },
+      {
+        id: 4,
+        numero_convenio: "4455667",
+        data_criacao: new Date(),
+        conta_id: 4,
+      },
+    ], {});
 
-    // Quinto: serviços referenciando convenio
-    const servicos = [];
-    for (let i = 1; i <= 50; i++) {
-      servicos.push({
-        id: i,
+    // Servico 
+    const servicos = [
+      // Serviços BOLETO
+      {
+        id: 1,
+        produto: "BOLETO",
+        situacao: "disponivel",
         convenio_id: 1,
-        status: 'ativo',
-        data_criacao: new Date()
-      });
-    }
-    await queryInterface.bulkInsert('servico', servicos, {});
-
-    // SEXTO: PRODUTOS COM CAMPOS ADICIONAIS PARA WEBHOOK
-    const agora = new Date();
-
-    // Boletos com dados completos para webhook
-    await queryInterface.bulkInsert('boleto', [
-      { 
-        id: 'BOL001', 
-        cedente_id: 1, 
-        situacao: 'REGISTRADO', 
-        data_criacao: agora,
-        valor: 150.50,
-        vencimento: new Date('2025-12-31'),
-        beneficiario: 'Empresa Teste LTDA',
-        pagador: 'Cliente Exemplo 1',
-        nosso_numero: '456456'
+        status: "inativo",
+        data_criacao: new Date(),
       },
-      { 
-        id: 'BOL002', 
-        cedente_id: 1, 
-        situacao: 'REGISTRADO', 
-        data_criacao: agora,
-        valor: 230.00,
-        vencimento: new Date('2025-11-30'),
-        beneficiario: 'Empresa Teste LTDA',
-        pagador: 'Cliente Exemplo 2',
-        nosso_numero: '456457'
+      {
+        id: 2,
+        produto: "BOLETO",
+        situacao: "disponivel",
+        convenio_id: 1,
+        status: "ativo",
+        data_criacao: new Date(),
       },
-      { 
-        id: 'BOL003', 
-        cedente_id: 1, 
-        situacao: 'BAIXADO', 
-        data_criacao: agora,
-        valor: 89.90,
-        vencimento: new Date('2025-10-15'),
-        beneficiario: 'Empresa Teste LTDA',
-        pagador: 'Cliente Exemplo 3',
-        nosso_numero: '456458'
+      {
+        id: 3,
+        produto: "BOLETO",
+        situacao: "pago",
+        convenio_id: 1,
+        status: "ativo",
+        data_criacao: new Date(),
       },
-      { 
-        id: 'BOL004', 
-        cedente_id: 1, 
-        situacao: 'LIQUIDADO', 
-        data_criacao: agora,
-        valor: 450.75,
-        vencimento: new Date('2025-09-20'),
-        beneficiario: 'Empresa Teste LTDA',
-        pagador: 'Cliente Exemplo 4',
-        nosso_numero: '456459'
+      {
+        id: 4,
+        produto: "BOLETO",
+        situacao: "cancelado",
+        convenio_id: 1,
+        status: "ativo",
+        data_criacao: new Date(),
+      },
+      {
+        id: 5,
+        produto: "BOLETO",
+        situacao: "disponivel",
+        convenio_id: 4,
+        status: "ativo",
+        data_criacao: new Date(),
+      },
+      {
+        id: 6,
+        produto: "BOLETO",
+        situacao: "disponivel",
+        convenio_id: 4,
+        status: "inativo",
+        data_criacao: new Date(),
       },
       
-    ], {});
-
-    // Pagamentos com dados completos para webhook
-    await queryInterface.bulkInsert('pagamento', [
-      { 
-        id: 'PAG001', 
-        cedente_id: 1, 
-        situacao: 'SCHEDULED', 
-        data_criacao: agora,
-        valor: 1000.00,
-        data_agendamento: new Date('2025-11-01'),
-        favorecido: 'Fornecedor ABC',
-        descricao: 'Pagamento de serviços'
+      // Serviços PIX
+      {
+        id: 7,
+        produto: "PIX",
+        situacao: "disponivel",
+        convenio_id: 2,
+        status: "ativo",
+        data_criacao: new Date(),
       },
-      { 
-        id: 'PAG002', 
-        cedente_id: 1, 
-        situacao: 'CANCELLED', 
-        data_criacao: agora,
-        valor: 550.50,
-        data_agendamento: new Date('2025-10-20'),
-        favorecido: 'Fornecedor XYZ',
-        descricao: 'Pagamento cancelado'
+      {
+        id: 8,
+        produto: "PIX",
+        situacao: "pago",
+        convenio_id: 2,
+        status: "ativo",
+        data_criacao: new Date(),
       },
-      { 
-        id: 'PAG003', 
-        cedente_id: 1, 
-        situacao: 'PAID', 
-        data_criacao: agora,
-        valor: 789.30,
-        data_agendamento: new Date('2025-10-10'),
-        favorecido: 'Funcionário João',
-        descricao: 'Salário'
+      {
+        id: 9,
+        produto: "PIX",
+        situacao: "cancelado",
+        convenio_id: 2,
+        status: "ativo",
+        data_criacao: new Date(),
+      },
+      
+      // Serviços PAGAMENTO
+      {
+        id: 10,
+        produto: "PAGAMENTO",
+        situacao: "disponivel",
+        convenio_id: 3,
+        status: "inativo",
+        data_criacao: new Date(),
+      },
+      {
+        id: 11,
+        produto: "PAGAMENTO",
+        situacao: "disponivel",
+        convenio_id: 3,
+        status: "ativo",
+        data_criacao: new Date(),
+      },
+      {
+        id: 12,
+        produto: "PAGAMENTO",
+        situacao: "pago",
+        convenio_id: 3,
+        status: "ativo",
+        data_criacao: new Date(),
+      },
+      {
+        id: 13,
+        produto: "PAGAMENTO",
+        situacao: "cancelado",
+        convenio_id: 3,
+        status: "ativo",
+        data_criacao: new Date(),
       }
-    ], {});
+    ];
 
-    // Pix com dados completos para webhook
-    await queryInterface.bulkInsert('pix', [
-      { 
-        id: 'PIX001', 
-        cedente_id: 1, 
-        situacao: 'ACTIVE', 
-        data_criacao: agora,
-        valor: 150.00,
-        chave_pix: '11999999999',
-        nome_recebedor: 'João Silva',
-        transaction_id: '8b1a3c7d-e6f0-4d9c-b2a1-5f0e9c8d7b6a'
-      },
-      { 
-        id: 'PIX002', 
-        cedente_id: 1, 
-        situacao: 'REJECTED', 
-        data_criacao: agora,
-        valor: 75.50,
-        chave_pix: 'exemplo@email.com',
-        nome_recebedor: 'Maria Santos',
-        transaction_id: '9c2b4d8e-f7g1-5e0d-c3b2-6g1f0d9e8c7b'
-      },
-      { 
-        id: 'PIX003', 
-        cedente_id: 1, 
-        situacao: 'LIQUIDATED', 
-        data_criacao: agora,
-        valor: 200.00,
-        chave_pix: '123.456.789-00',
-        nome_recebedor: 'Carlos Oliveira',
-        transaction_id: '1a2b3c4d-5e6f-7g8h-9i0j-1k2l3m4n5o6p'
-      }
-    ], {});
+    await queryInterface.bulkInsert('servico', servicos, {});
 
-    // Sétimo: webhooks_reprocessado 
+    // Webhook Reprocessado 
     const { v4: uuidv4 } = require('uuid'); 
     const webhooks = [];
     
-    // Webhooks de exemplo 
-    for (let i = 1; i <= 5; i++) {
+    for (let i = 1; i <= 10; i++) {
+      const tipo = i % 3 === 0 ? 'pago' : (i % 3 === 1 ? 'disponivel' : 'cancelado');
+      const product = i % 3 === 0 ? 'BOLETO' : (i % 3 === 1 ? 'PIX' : 'PAGAMENTO');
+      
       webhooks.push({
         id: uuidv4(),
         data: JSON.stringify({
@@ -214,23 +328,23 @@ module.exports = {
             url: 'https://webhook.site/3532cf9a-ba2c-4c54-87f8-c45a7569d538',
             headers: "Headers configurado pelo cliente",
             body: {
-              tipoWH: i % 2 === 0 ? 'notifica_liquidou' : 'notifica_gerou',
+              tipoWH: getBoletoTipoWH(tipo),
               datahoraEnvio: new Date().toLocaleString('pt-BR'),
               titulo: {
-                situacao: i % 2 === 0 ? 'LIQUIDADO' : 'REGISTRADO',
-                idintegracao: `BOL00${i}`,
+                situacao: getBoletoSituacao(tipo),
+                idintegracao: i.toString(),
                 TitulohossoNumero: `45645${i}`,
                 Titulohovimentos: {}
               },
-              CpfCnpjCedente: '98765432000198'
+              CpfCnpjCedente: '45723174000110'
             }
           }]
         }),
-        data_criacao: new Date(),
+        data_criacao: new Date(Date.now() - (i * 24 * 60 * 60 * 1000)),
         cedente_id: 1,
         kind: 'webhook',
-        type: i % 2 === 0 ? 'pago' : 'disponivel',
-        servico_id: JSON.stringify([`BOL00${i}`]),
+        type: tipo,
+        servico_id: JSON.stringify([i]),
         protocolo: `WH${uuidv4().replace(/-/g, '').substring(0, 20).toUpperCase()}`
       });
     }
@@ -239,11 +353,7 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    // Ordem inversa para remoção (por causa das FKs)
     await queryInterface.bulkDelete('webhook_reprocessado', null, {});
-    await queryInterface.bulkDelete('pix', null, {});
-    await queryInterface.bulkDelete('pagamento', null, {});
-    await queryInterface.bulkDelete('boleto', null, {});
     await queryInterface.bulkDelete('servico', null, {});
     await queryInterface.bulkDelete('convenio', null, {});
     await queryInterface.bulkDelete('conta', null, {});
@@ -251,3 +361,22 @@ module.exports = {
     await queryInterface.bulkDelete('softwarehouse', null, {});
   }
 };
+
+// Funções auxiliares para webhook 
+function getBoletoTipoWH(type) {
+  const map = { 
+    'disponivel': 'notifica_gerou', 
+    'cancelado': 'notifica_cancelou', 
+    'pago': 'notifica_liquidou' 
+  };
+  return map[type] || 'notifica_gerou';
+}
+
+function getBoletoSituacao(type) {
+  const map = { 
+    'disponivel': 'REGISTRADO', 
+    'cancelado': 'BAIXADO', 
+    'pago': 'LIQUIDADO' 
+  };
+  return map[type];
+}

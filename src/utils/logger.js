@@ -20,7 +20,7 @@ const logger = winston.createLogger({
         winston.format.simple()
       )
     })
-  ].filter(Boolean) // Remove valores falsy (como 'false') da lista de transports
+  ].filter(Boolean) // Remove entradas falsas (como o console em ambiente de teste)
 });
 
 module.exports = logger;

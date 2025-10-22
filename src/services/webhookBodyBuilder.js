@@ -1,183 +1,182 @@
-const { Boleto, Pagamento, Pix } = require('../models');
+const { Servico, Convenio, Conta } = require('../models');
 const crypto = require('crypto');
 
-// Criar a função localmente
+// Função para gerar accountHash
 const generateRealAccountHash = () => {
-  return crypto.randomBytes(8).toString('hex').toUpperCase(); // Hash de 16 caracteres
+  return crypto.randomBytes(8).toString('hex').toUpperCase();
 };
 
-const buildWebhookBody = async (product, type, ids, cedente, accountHash) => {
+const buildWebhookBody = async (product, type, servicos, cedente, accountHash) => {
   const timestamp = new Date();
   
   try {
+    console.log('buildWebhookBody - servicos recebidos:', servicos);
+
+    // Extrair apenas os IDs dos serviços
+    const servicoIds = servicos.map(servico => {
+      if (typeof servico === 'object' && servico.id) {
+        return servico.id;
+      }
+      return servico;
+    });
+
+    console.log('buildWebhookBody - IDs extraídos:', servicoIds);
+
+    // Buscar serviços reais do banco
+    const servicosReais = await Servico.findAll({
+      where: { 
+        id: servicoIds,
+        status: 'ativo'
+      },
+      include: [{
+        model: Convenio,
+        include: [{
+          model: Conta,
+          where: { cedente_id: cedente.id }
+        }]
+      }]
+    });
+
+    console.log('buildWebhookBody - serviços encontrados no banco:', servicosReais.length);
+
+    if (!servicosReais || servicosReais.length === 0) {
+      throw new Error(`Nenhum serviço encontrado para os IDs: ${servicoIds.join(', ')}`);
+    }
+
     switch (product) {
       case 'boleto':
-        return await buildBoletoWebhook(type, ids, cedente, timestamp);
+        return buildBoletoWebhook(type, servicosReais, cedente, timestamp);
       
       case 'pagamento':
-        return await buildPagamentoWebhook(type, ids, cedente, timestamp, accountHash);
+        return buildPagamentoWebhook(type, servicosReais, cedente, timestamp, accountHash);
       
       case 'pix':
-        return await buildPixWebhook(type, ids, cedente, timestamp);
+        return buildPixWebhook(type, servicosReais, cedente, timestamp);
       
       default:
         throw new Error(`Produto ${product} não suportado`);
     }
   } catch (error) {
+    console.error('Erro detalhado no buildWebhookBody:', error);
     throw new Error(`Erro ao construir webhook: ${error.message}`);
   }
 };
 
-// Boleto - formato da imagem CORRIGIDO para múltiplos
-const buildBoletoWebhook = async (type, ids, cedente, timestamp) => {
-  const boletos = await Boleto.findAll({
-    where: { 
-      id: ids,
-      cedente_id: cedente.id 
-    }
-  });
-
-  if (!boletos || boletos.length === 0) {
-    throw new Error(`Nenhum boleto encontrado para os IDs: ${ids.join(', ')}`);
-  }
-
-  // Se há múltiplos boletos, criar um webhook para CADA um
-  if (boletos.length > 1) {
-    // Para múltiplos boletos, criar estrutura com array de títulos
+// Boleto 
+const buildBoletoWebhook = async (type, servicos, cedente, timestamp) => {
+  // Para múltiplos boletos
+  if (servicos.length > 1) {
     return {
       tipoWH: getBoletoTipoWH(type),
       datahoraEnvio: timestamp.toLocaleString('pt-BR'),
-      titulos: boletos.map(boleto => ({ 
+      titulos: servicos.map(servico => ({ 
         situacao: getBoletoSituacao(type),
-        idintegracao: boleto.id,
-        TitulohossoNumero: boleto.nosso_numero || boleto.id,
+        idintegracao: servico.id.toString(),
+        TitulohossoNumero: generateNossoNumero(servico.id),
         Titulohovimentos: {},
-        
-        valor: boleto.valor,
-        vencimento: boleto.vencimento ? boleto.vencimento.toISOString().split('T')[0] : null,
-        beneficiario: boleto.beneficiario,
-        pagador: boleto.pagador
+        dataCriacao: servico.data_criacao
       })),
       CpfCnpjCedente: cedente.cnpj,
-      totalTitulos: boletos.length 
+      totalTitulos: servicos.length 
     };
   }
 
-  // Para um único boleto, manter estrutura original
+  // Para um único boleto
+  const servico = servicos[0];
   return {
     tipoWH: getBoletoTipoWH(type),
     datahoraEnvio: timestamp.toLocaleString('pt-BR'),
-    titulo: { // Singular para um boleto
+    titulo: {
       situacao: getBoletoSituacao(type),
-      idintegracao: boletos[0].id,
-      TitulohossoNumero: boletos[0].nosso_numero || boletos[0].id,
-      Titulohovimentos: {}
+      idintegracao: servico.id.toString(),
+      TitulohossoNumero: generateNossoNumero(servico.id),
+      Titulohovimentos: {},
+      dataCriacao: servico.data_criacao
     },
     CpfCnpjCedente: cedente.cnpj
   };
 };
 
-// Pagamento - formato da imagem para múltiplos
-const buildPagamentoWebhook = async (type, ids, cedente, timestamp, accountHash) => {
-  const pagamentos = await Pagamento.findAll({
-    where: { 
-      id: ids,
-      cedente_id: cedente.id 
-    }
-  });
-
-  if (!pagamentos || pagamentos.length === 0) {
-    throw new Error(`Nenhum pagamento encontrado para os IDs: ${ids.join(', ')}`);
-  }
-
+// Pagamento 
+const buildPagamentoWebhook = async (type, servicos, cedente, timestamp, accountHash) => {
   const finalAccountHash = accountHash || generateRealAccountHash();
 
   // Para múltiplos pagamentos
-  if (pagamentos.length > 1) {
+  if (servicos.length > 1) {
     return {
       status: getPagamentoStatus(type),
-      pagamentos: pagamentos.map(pagamento => ({ 
-        uniqueId: pagamento.id,
-        createdAt: pagamento.data_criacao.toISOString(),
+      pagamentos: servicos.map(servico => ({ 
+        uniqueId: servico.id.toString(),
+        createdAt: servico.data_criacao.toISOString(),
         ocurrences: [],
-        accountHash: generateRealAccountHash(), // Hash único para cada um
+        accountHash: generateRealAccountHash(),
         occurrences: [],
-        valor: pagamento.valor,
-        dataAgendamento: pagamento.data_agendamento ? pagamento.data_agendamento.toISOString() : null,
-        favorecido: pagamento.favorecido,
-        descricao: pagamento.descricao
+        dataCriacao: servico.data_criacao,
+        produto: servico.produto
       })),
-      totalPagamentos: pagamentos.length
+      totalPagamentos: servicos.length
     };
   }
 
   // Para um único pagamento
+  const servico = servicos[0];
   return {
     status: getPagamentoStatus(type),
-    uniqueId: pagamentos[0].id,
-    createdAt: pagamentos[0].data_criacao.toISOString(),
+    uniqueId: servico.id.toString(),
+    createdAt: servico.data_criacao.toISOString(),
     ocurrences: [],
     accountHash: finalAccountHash,
-    occurrences: []
+    occurrences: [],
+    dataCriacao: servico.data_criacao
   };
 };
 
-// Pix - formato da imagem para múltiplos
-const buildPixWebhook = async (type, ids, cedente, timestamp) => {
-  const pixs = await Pix.findAll({
-    where: { 
-      id: ids,
-      cedente_id: cedente.id 
-    }
-  });
-
-  if (!pixs || pixs.length === 0) {
-    throw new Error(`Nenhum pix encontrado para os IDs: ${ids.join(', ')}`);
-  }
-
+// Pix 
+const buildPixWebhook = async (type, servicos, cedente, timestamp) => {
   // Para múltiplos PIX
-  if (pixs.length > 1) {
+  if (servicos.length > 1) {
     return {
       type: "SEND_WEBHOOK",
       companyId: cedente.id,
       event: getPixEvent(type),
-      transacoes: pixs.map(pix => ({ 
-        transactionId: pix.transaction_id || pix.id,
+      transacoes: servicos.map(servico => ({ 
+        transactionId: generateTransactionId(servico.id),
         tags: [
-          `#${pix.id}`,
+          `#${servico.id}`,
           "pix",
-          timestamp.getFullYear().toString()
+          timestamp.getFullYear().toString(),
         ],
         id: {
-          pixId: parseInt(pix.id.replace(/\D/g, '').substring(0, 8)) || generatePixId()
+          pixId: generatePixId(servico.id)
         },
-        valor: pix.valor,
-        chavePix: pix.chave_pix,
-        nomeRecebedor: pix.nome_recebedor,
-        timestamp: timestamp.toISOString()
+        dataCriacao: servico.data_criacao,
+        situacao: servico.situacao
       })),
-      totalTransacoes: pixs.length
+      totalTransacoes: servicos.length
     };
   }
 
   // Para um único PIX
+  const servico = servicos[0];
   return {
     type: "SEND_WEBHOOK",
     companyId: cedente.id,
     event: getPixEvent(type),
-    transactionId: pixs[0].transaction_id || pixs[0].id,
+    transactionId: generateTransactionId(servico.id),
     tags: [
-      `#${pixs[0].id}`,
+      `#${servico.id}`,
       "pix",
-      timestamp.getFullYear().toString()
+      timestamp.getFullYear().toString(),
     ],
     id: {
-      pixId: parseInt(pixs[0].id.replace(/\D/g, '').substring(0, 8)) || generatePixId()
-    }
+      pixId: generatePixId(servico.id)
+    },
+    dataCriacao: servico.data_criacao,
+    situacao: servico.situacao
   };
 };
 
-// Funções auxiliares (mantenha as mesmas)
+// Funções auxiliares 
 const getBoletoTipoWH = (type) => {
   const map = { 
     'disponivel': 'notifica_gerou', 
@@ -214,8 +213,17 @@ const getPixEvent = (type) => {
   return map[type];
 };
 
-const generatePixId = () => {
-  return Math.floor(10000000 + Math.random() * 90000000);
+const generateNossoNumero = (servicoId) => {
+  return `45645${servicoId.toString().padStart(6, '0')}`;
+};
+
+const generateTransactionId = (servicoId) => {
+  return `tx${servicoId}${Date.now()}`;
+};
+
+const generatePixId = (servicoId) => {
+  const baseId = servicoId * 1000000;
+  return baseId + Math.floor(Math.random() * 1000000);
 };
 
 module.exports = { buildWebhookBody };
