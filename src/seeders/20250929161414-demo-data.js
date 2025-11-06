@@ -36,7 +36,7 @@ module.exports = {
         softwarehouse_id: 1,
         status: "ativo",
         configuracao_notificacao: JSON.stringify({
-          url: "https://webhook.site/3532cf9a-ba2c-4c54-87f8-c45a7569d538",
+          url: "https://webhook.site/69502649-f3f7-482b-bfc1-0ad80ce8f3a6",
           email: null,
           tipos: {},
           cancelado: true,
@@ -81,7 +81,7 @@ module.exports = {
         cedente_id: 1,
         status: "ativo",
         configuracao_notificacao: JSON.stringify({
-          url: "https://webhook.site/3532cf9a-ba2c-4c54-87f8-c45a7569d538",
+          url: "https://webhook.site/69502649-f3f7-482b-bfc1-0ad80ce8f3a6",
           email: null,
           tipos: {},
           cancelado: true,   
@@ -104,7 +104,7 @@ module.exports = {
         cedente_id: 2,
         status: "inativo",
         configuracao_notificacao: JSON.stringify({
-          url: "https://webhook.site/3532cf9a-ba2c-4c54-87f8-c45a7569d538",
+          url: "https://webhook.site/69502649-f3f7-482b-bfc1-0ad80ce8f3a6",
           email: null,
           tipos: {},
           cancelado: true,   
@@ -127,7 +127,7 @@ module.exports = {
         cedente_id: 3,
         status: "inativo",
         configuracao_notificacao: JSON.stringify({
-          url: "https://webhook.site/3532cf9a-ba2c-4c54-87f8-c45a7569d538",
+          url: "https://webhook.site/69502649-f3f7-482b-bfc1-0ad80ce8f3a6",
           email: null,
           tipos: {},
           cancelado: true,   
@@ -150,7 +150,7 @@ module.exports = {
         cedente_id: 1,
         status: "ativo",
         configuracao_notificacao: JSON.stringify({
-          url: "https://webhook.site/3532cf9a-ba2c-4c54-87f8-c45a7569d538",
+          url: "https://webhook.site/69502649-f3f7-482b-bfc1-0ad80ce8f3a6",
           email: null,
           tipos: {},
           cancelado: true,   
@@ -325,7 +325,7 @@ module.exports = {
           notifications: [{
             kind: 'webhook',
             method: 'POST',
-            url: 'https://webhook.site/3532cf9a-ba2c-4c54-87f8-c45a7569d538',
+            url: 'https://webhook.site/69502649-f3f7-482b-bfc1-0ad80ce8f3a6',
             headers: "Headers configurado pelo cliente",
             body: {
               tipoWH: getBoletoTipoWH(tipo),
