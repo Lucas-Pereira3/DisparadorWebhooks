@@ -10,7 +10,7 @@ const validateHeaders = async (req, res, next) => {
       'token-cedente': tokenCedente
     } = req.headers;
 
-    // Valida se todos os headers obrigatórios foram enviados
+    // Valida se todos os headers obrigatórios foram enviado
     if (!cnpjSh || !tokenSh || !cnpjCedente || !tokenCedente) {
       return res.status(400).json({
         error: 'Headers de autenticação são obrigatórios: cnpj-sh, token-sh, cnpj-cedente, token-cedente'
